@@ -8,7 +8,10 @@
 
 
     Undefined、Null、Boolean、Number、String、Symbol (new in ES 6)
-    
+
+## 知识扩展： ##
+
+### 基础类型 ###
    
 > 深入了解基本类型和引用类型的值
 >   
@@ -65,8 +68,62 @@
 ![](https://segmentfault.com/img/bVCunf)
 
 
- 
- 
+### 引用类型 ###
 
 
+
+> 除过上面的 6 种基本数据类型外，剩下的就是引用类型了，统称为 Object 类型。细分的话，有：Object 类型、Array 类型、Date 类型、RegExp 类型、Function 类型 等。
+
+> **引用类型的值是按引用访问的**
+
+> 
+- 引用类型的值是可变的
+
+    var obj = {name:"zyj"};   // 创建一个对象
+    obj.name = "percy";   // 改变 name 属性的值
+    obj.age = 21; // 添加 age 属性
+    obj.giveMeAll = function(){
+      return this.name + " : " + this.age;
+    };// 添加 giveMeAll 方法
+    obj.giveMeAll();
+ 
+
+> - 引用类型的比较是引用的比较
+
+    var obj1 = {};// 新建一个空对象 obj1
+    var obj2 = {};// 新建一个空对象 obj2
+    console.log(obj1 == obj2);// false
+    console.log(obj1 === obj2);   // false
+    
+
+> 因为 obj1 和 obj2 分别引用的是存放在堆内存中的2个不同的对象，故变量 obj1 和 obj2 的值（引用地址）也是不一样的！
+
+
+> 引用类型的值是保存在堆内存（Heap）中的对象（Object）
+> 
+
+
+> 与其他编程语言不同，JavaScript 不能直接操作对象的内存空间（堆内存）。
+
+    var a = {name:"percy"};
+    var b;
+    b = a;
+    a.name = "zyj";
+    console.log(b.name);// zyj
+    b.age = 22;
+    console.log(a.age); // 22
+    var c = {
+      name: "zyj",
+      age: 22
+    };
+
+
+
+> 图解如下：
+
+> - 栈内存中保存了变量标识符和指向堆内存中该对象的指针
+
+> - 堆内存中保存了对象的内容
+
+![](https://segmentfault.com/img/bVCuGx)
 
