@@ -21,7 +21,7 @@
 
 
 
->### 基本数据类型的值是按值访问的。 ###
+>**基本数据类型的值是按值访问的。**
 
 
 
@@ -127,3 +127,49 @@
 
 ![](https://segmentfault.com/img/bVCuGx)
 
+
+
+> **检测类型**
+
+> typeof：经常用来检测一个变量是不是最基本的数据类型
+
+    var a;
+    typeof a;// undefined
+    
+    a = null;
+    typeof a;// object
+    
+    a = true;
+    typeof a;// boolean
+    
+    a = 666;
+    typeof a;// number 
+    
+    a = "hello";
+    typeof a;// string
+    
+    a = Symbol();
+    typeof a;// symbol
+    
+    a = function(){}
+    typeof a;// function
+    
+    a = [];
+    typeof a;// object
+    a = {};
+    typeof a;// object
+    a = /aaa/g;
+    typeof a;// object   
+    
+
+
+> instanceof：用来判断某个构造函数的 prototype 属性所指向的对象是否存在于另外一个要检测对象的原型链上
+
+
+
+> 简单说就是判断一个引用类型的变量具体是不是某种类型的对象
+    
+    ({}) instanceof Object  // true
+    ([]) instanceof Array   // true
+    (/aa/g) instanceof RegExp   // true
+    (function(){}) instanceof Function  // true
