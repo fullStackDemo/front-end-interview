@@ -40,8 +40,29 @@
     
  
 
+> 上面 a 和 b 的数据类型不同，但是也可以进行值的比较，这是因为在比较之前，自动进行了数据类型的 隐式转换
+
+> == : 只进行值的比较
+> 
+> === : 不仅进行值得比较，还要进行数据类型的比较
 
 
+> - 基本类型的变量是存放在栈内存（Stack）里的
+
+
+    var a,b;
+    a = "zyj";
+    b = a;
+    console.log(a);   // zyj
+    console.log(b);   // zyj
+    a = "呵呵";   // 改变 a 的值，并不影响 b 的值
+    console.log(a);   // 呵呵
+    console.log(b);   // zyj
+
+
+> 图解如下：栈内存中包括了变量的标识符和变量的值
+
+![](https://segmentfault.com/img/bVCunf)
 
 
  
