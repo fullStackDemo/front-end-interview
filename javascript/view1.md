@@ -255,5 +255,8 @@
 	}
 	var person = new Func();
 	console.log(person.getInfo());//"Xiaosong"
+	
+	
+
 
 
