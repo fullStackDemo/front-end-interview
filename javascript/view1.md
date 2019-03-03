@@ -740,6 +740,47 @@
 	// but unlike `parseInt` will also return a float or (resolved) exponential notation:
 	['1.1', '2.2e2', '3e300'].map(Number); // [1.1, 220, 3e+300]
 
+## 14、事件是什么？IE与火狐的事件机制有何区别？如何阻止冒泡？
+
+	(1)我们在网页中的某个操作（有的操作对应多个事件）。
+	
+	    例如：当我们点击一个按钮就会产生一个事件。是可以被 JavaScript 侦测到的行为。
+	    
+	(2)事件处理机制：IE是事件冒泡、Firefox同时支持两种事件模型，也就是：捕获型事件和冒泡型事件；
+	
+	(3)ev.stopPropagation();（旧ie的方法 ev.cancelBubble = true;）
+
+## 15、什么是闭包(closure)，为什么要用它？
+	闭包是指有权访问另一个函数作用域中变量的函数，
+	创建闭包的最常见的方式就是在一个函数内创建另一个函数，
+	通过另一个函数访问这个函数的局部变量，利用闭包可以突破作用链域，
+	将函数内部的变量和方法传递到外部。
+	
+	//闭包特性：
+	(1)函数内再嵌套函数
+	(2)内部函数可以引用外层的参数和变量
+	(3)参数和变量不会被垃圾回收机制回收
+	
+	//li节点的onclick事件都能正确的弹出当前被点击的li索引
+	<ul> 
+	    <li> index = 0 </li> 
+	    <li> index = 1 </li> 
+	    <li> index = 2 </li> 
+	    <li> index = 3 </li>
+	</ul>
+	<script type="text/javascript"> 
+	    var nodes = document.getElementsByTagName('li'); 
+	    for(i = 0;i<nodes.length;i+=1) { 
+	        nodes[i].onclick = function() { 
+	            console.log(i+1); //不使用闭包的话，值每次都是4 
+	        }(4);
+	     }
+	</script>
+
+
+
+
+
 
 
 
