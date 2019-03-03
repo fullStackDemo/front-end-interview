@@ -482,4 +482,265 @@
 
 核心：通过调用父类构造，继承父类的属性并保留传参的优点，然后通过将父类实例作为子类原型，实现函数复用
 
+	function Cat(name){
+	  Animal.call(this);
+	  this.name = name || 'Tom';
+	}
+	Cat.prototype = new Animal();
+	
+	// 感谢 @学无止境c 的提醒，组合继承也是需要修复构造函数指向的。
+	
+	Cat.prototype.constructor = Cat;
+	
+	// Test Code
+	var cat = new Cat();
+	console.log(cat.name);
+	console.log(cat.sleep());
+	console.log(cat instanceof Animal); // true
+	console.log(cat instanceof Cat); // true
+
+特点：
+
+>1 弥补了方式2的缺陷，可以继承实例属性/方法，也可以继承原型属性/方法
+>
+>2 既是子类的实例，也是父类的实例
+>
+>3 不存在引用属性共享问题
+>
+>4 可传参
+>
+>5 函数可复用
+
+缺点：
+
+> 1 调用了两次父类构造函数，生成了两份实例（子类实例将子类原型上的那份屏蔽了）
+
+
+推荐指数：★★★★（仅仅多消耗了一点内存）
+
+**6、寄生组合继承**
+
+
+核心：通过寄生方式，砍掉父类的实例属性，这样，在调用两次父类的构造的时候，就不会初始化两次实例方法/属性，避免的组合继承的缺点
+
+	function Cat(name){
+	  Animal.call(this);
+	  this.name = name || 'Tom';
+	}
+	(function(){
+	  // 创建一个没有实例方法的类
+	  var Super = function(){};
+	  Super.prototype = Animal.prototype;
+	  //将实例作为子类的原型
+	  Cat.prototype = new Super();
+	})();
+	Cat.prototype.constructor = Cat; // 需要修复下构造函数
+	
+	// Test Code
+	var cat = new Cat();
+	console.log(cat.name);
+	console.log(cat.sleep());
+	console.log(cat instanceof Animal); // true
+	console.log(cat instanceof Cat); //true
+
+特点：
+
+>堪称完美
+
+缺点：
+
+>实现较为复杂
+
+
+推荐指数：★★★★（实现复杂，扣掉一颗星
+
+## 10、JavaScript 有哪几种创建对象的方式？
+
+
+	javascript创建对象简单的说,无非就是使用内置对象或各种自定义对象，当然还可以用JSON；但写法有很多种，也能混合使用。
+	//
+	(1)对象字面量的方式
+	person={firstname:"Mark",lastname:"Yun",age:25,eyecolor:"black"};
+	(2)用function来模拟无参的构造函数
+	function Person(){}
+	var person = new Person(); //定义一个function，如果使用new"实例化",该function可以看作是一个Class
+	person.name = "Xiaosong";
+	person.age = "23";
+	person.work = function() {
+	     alert("Hello " + person.name);
+	}
+	person.work();
+	(3)用function来模拟参构造函数来实现（用this关键字定义构造的上下文属性）
+	function Person(name,age,hobby) { 
+	    this.name = name; //this作用域：当前对象
+	    this.age = age; 
+	    this.work = work; 
+	    this.info = function() { 
+	        alert("我叫" + this.name + "，今年" + this.age + "岁，是个" + this.work); 
+	    }
+	}
+	var Xiaosong = new Person("WooKong",23,"程序猿"); //实例化、创建对象
+	Xiaosong.info(); //调用info()方法
+	(4)用工厂方式来创建（内置对象）
+	var jsCreater = new Object();
+	jsCreater.name = "Brendan Eich"; //JavaScript的发明者
+	jsCreater.work = "JavaScript";
+	jsCreater.info = function() { 
+	    alert("我是"+this.work+"的发明者"+this.name);
+	}
+	jsCreater.info();
+	(5)用原型方式来创建
+	function Standard(){}
+	Standard.prototype.name = "ECMAScript";
+	Standard.prototype.event = function() { 
+	    alert(this.name+"是脚本语言标准规范");
+	}
+	var jiaoben = new Standard();
+	jiaoben.event();
+	(6)用混合方式来创建
+	function iPhone(name,event) {
+	     this.name = name;
+	     this.event = event;
+	}
+	iPhone.prototype.sell = function() { 
+	    alert("我是"+this.name+"，我是iPhone5s的"+this.event+"~ haha!");
+	}
+	var SE = new iPhone("iPhone SE","官方翻新机");
+	SE.sell();
+
+## 11、null 和 undefined 有何区别？
+
+	null 表示一个对象被定义了，值为“空值”；
+	undefined 表示不存在这个值。
+	typeof undefined //"undefined"
+	undefined :是一个表示"无"的原始值或者说表示"缺少值"，就是此处应该有一个值，但是还没有定义。当尝试读取时会返回 undefined； 
+	例如变量被声明了，但没有赋值时，就等于undefined。
+	typeof null //"object" 
+	null : 是一个对象(空对象, 没有任何属性和方法)； 
+	例如作为函数的参数，表示该函数的参数不是对象；
+	注意： 在验证null时，一定要使用　=== ，因为 == 无法分别 null 和　undefined
+
+## 12、能否写一个通用的事件侦听器函数？
+
+	//Event工具集，from:github.com/markyunmarkyun.
+	Event = {
+	     //页面加载完成后
+	     readyEvent: function(fn) {
+	         if (fn == null) {
+	             fn = document;
+	         } 
+	      var oldonload = window.onload; 
+	      if (typeof window.onload != 'function') {
+	           window.onload = fn; 
+	      }else{
+	           window.onload = function() { 
+	              oldonload(); 
+	              fn();
+	           }; 
+	      }
+	    }, 
+	      //视能力分别使用 demo0 || demo1 || IE 方式来绑定事件 
+	      //参数：操作的元素，事件名称，事件处理程序 
+	      addEvent: function(element,type,handler) { 
+	          if (element.addEventListener) { //事件类型、需要执行的函数、是否捕捉   
+	               element.addEventListener(type,handler,false); 
+	          }else if (element.attachEvent) { 
+	              element.attachEvent('on' + type, function() {
+	                    handler.call(element);
+	               }); 
+	          }else { 
+	              element['on' + type] = handler; 
+	          }
+	       }, 
+	      //移除事件 
+	       removeEvent: function(element,type,handler) {
+	          if (element.removeEventListener) {
+	               element.removeEventListener(type,handler,false); 
+	          }else if (element.datachEvent) { 
+	               element.datachEvent('on' + type,handler); 
+	          }else{
+	               element['on' + type] = null;
+	          }
+	        },
+	     //阻止事件（主要是事件冒泡，因为IE不支持事件捕获） 
+	      stopPropagation: function(ev) { 
+	          if (ev.stopPropagation) { 
+	               ev.stopPropagation(); 
+	          }else { 
+	               ev.cancelBubble = true;
+	          }
+	       }, 
+	     //取消事件的默认行为
+	      preventDefault: function(event) {
+	         if (event.preventDefault) { 
+	              event.preventDefault(); 
+	         }else{
+	              event.returnValue = false; 
+	         }
+	      }, 
+	     //获取事件目标 
+	     getTarget: function(event) { 
+	        return event.target || event.srcElemnt; 
+	     },
+	     //获取event对象的引用，取到事件的所有信息，确保随时能使用event； 
+	     getEvent: function(e) { 
+	        var ev = e || window.event;
+	        if (!ev) { 
+	            var c = this.getEvent.caller; 
+	            while(c) { 
+	                ev = c.argument[0]; 
+	                if (ev && Event == ev.constructor) {
+	                     break; 
+	                } 
+	                c = c.caller; 
+	            } 
+	        } 
+	        retrun ev; 
+	      }
+	};
+
+## 13、["1","2","3"].map(parseInt) 的答案是多少？
+
+	[1,NaN,NaN]
+	因为 parseInt 需要两个参数(val,radix)，其中 radix 表示解析时用的基数。
+	map 传了3个(element,index,array)，对应的 radix 不合法导致解析失败。
+
+> detail:
+
+	// Consider:
+	['1', '2', '3'].map(parseInt);
+	// While one could expect [1, 2, 3]
+	// The actual result is [1, NaN, NaN]
+	
+	// parseInt is often used with one argument, but takes two.
+	// The first is an expression and the second is the radix.
+	// To the callback function, Array.prototype.map passes 3 arguments: 
+	// the element, the index, the array
+	// The third argument is ignored by parseInt, but not the second one,
+	// hence the possible confusion. See the blog post for more details
+	// If the link doesn't work
+	// here is concise example of the iteration steps:
+	// parseInt(string, radix) -> map(parseInt(value, index))
+	// first iteration (index is 0): parseInt('1', 0) // results in parseInt('1', 0) -> 1
+	// second iteration (index is 1): parseInt('2', 1) // results in parseInt('2', 1) -> NaN
+	// third iteration (index is 2): parseInt('3', 2) // results in parseInt('3', 2) -> NaN
+	
+	function returnInt(element) {
+	  return parseInt(element, 10);
+	}
+	
+	['1', '2', '3'].map(returnInt); // [1, 2, 3]
+	// Actual result is an array of numbers (as expected)
+	
+	// Same as above, but using the concise arrow function syntax
+	['1', '2', '3'].map( str => parseInt(str) );
+	
+	// A simpler way to achieve the above, while avoiding the "gotcha":
+	['1', '2', '3'].map(Number); // [1, 2, 3]
+	// but unlike `parseInt` will also return a float or (resolved) exponential notation:
+	['1.1', '2.2e2', '3e300'].map(Number); // [1.1, 220, 3e+300]
+
+
+
+
 
