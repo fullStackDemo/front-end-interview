@@ -145,6 +145,267 @@
 
 ## 3、深入理解浏览器工作原理
 
+浏览器（browser application）是专门用来访问和浏览万维网页面的客户端软件，也是现代计算机系统中应用最为广泛的软件之一，其重要性不言而喻。前端工程师作为负责程序页面显示的工程师，需要直接与浏览器打交道。本文将详细介绍浏览器的工作原理
+
+**组成**
+
+浏览器的组成如下图所示
+
+![](https://pic.xiaohuochai.site/blog/browserRender1.png)
+
+　主要组件包括：
+
+　　1. 用户界面 － 包括地址栏、后退/前进按钮、书签目录等，也就是所看到的除了用来显示所请求页面的主窗口之外的其他部分
+
+　　2. 浏览器引擎 － 用来查询及操作渲染引擎的接口
+
+　　3. 渲染引擎 － 用来显示请求的内容，例如，如果请求内容为html，它负责解析html及css，并将解析后的结果显示出来。
+
+　　4. 网络 － 用来完成网络调用，例如http请求，它具有平台无关的接口，可以在不同平台上工作。
+
+　　5. UI后端 － 用来绘制类似组合选择框及对话框等基本组件，具有不特定于某个平台的通用接口，底层使用操作系统的用户接口。
+
+　　6. JS解释器 － 用来解释执行JS代码。
+
+　　7. 数据存储 － 属于持久层，浏览器需要在硬盘中保存类似cookie的各种数据，HTML5定义了web database技术，这是一种轻量级完整的客户端存储技术
+
+
+**内核**
+
+   
+ >浏览器内核分成两部分：渲染引擎和js引擎，由于js引擎越来越独立，内核就倾向于只指渲染引擎，负责请求网络页面资源加以解析排版并呈现给用户
+   
+ >默认情况下，渲染引擎可以显示html、xml文档及图片，它也可以借助插件显示其他类型数据，例如使用PDF阅读器插件，可以显示PDF格式
+
+【渲染引擎】
+
+	   firefox使用gecko引擎
+	
+	　　IE使用Trident引擎，2015年微软推出自己新的浏览器，原名叫斯巴达，后改名edge，使用edge引擎
+	
+	　　opera最早使用Presto引擎，后来弃用
+	
+	　　chrome\safari\opera使用webkit引擎，13年chrome和opera开始使用Blink引擎
+	
+	　　UC使用U3引擎
+	
+	　　QQ浏览器和微信内核使用X5引擎，16年开始使用Blink引擎
+
+【js引擎】
+
+	   老版本IE使用Jscript引擎，IE9之后使用Chakra引擎，edge浏览器仍然使用Chakra引擎
+	
+	　　firefox使用monkey系列引擎
+	
+	　　safari使用的SquirrelFish系列引擎
+	
+	　　Opera使用Carakan引擎
+	
+	　　chrome使用V8引擎。nodeJs其实就是封装了V8引擎
+
+
+**渲染流程**
+
+从资源的下载到最终的页面展现，渲染流程可简单地理解成一个线性串联的变换过程的组合，原始输入为URL地址，最终输出为页面Bitmap，中间依次经过了Loader、Parser、Layout和Paint模块
+
+![](https://pic.xiaohuochai.site/blog/chrome1.jpeg)
+
+渲染引擎的核心流程如下所示
+
+![](https://pic.xiaohuochai.site/blog/chrome4.jpeg)
+
+【Loader】
+
+Loader模块负责处理所有的HTTP请求以及网络资源的缓存，相当于是从URL输入到Page Resource输出的变换过程。HTML页面中通常有外链的JS/CSS/Image资源，为了不阻塞后续解析过程，一般会有两个IO管道同时存在，一个负责主页面下载，一个负责各种外链资源的下载
+
+![](https://pic.xiaohuochai.site/blog/chrome2.jpeg)
+
+注意：虽然大部分情况下不同资源可以并发下载异步解析（如图片资源可以在主页面解析显示完成后再被显示），但JS脚本可能会要求改变页面，因此有时保持执行顺序和下载管道后续处理的阻塞是不可避免的
+
+
+【Parser】
+
+   
+1、解析HTML
+
+　　Parser模块主要负责解析HTML页面，完成从HTML文本到HTML语法树再到文档对象树（Document Object Model Tree，DOM Tree）的映射过程
+
+　　HTML语法树生成是一个典型的语法解析过程，可以分成两个子过程：词法解析和语法解析
+
+　　词法解析按照词法规则（如正则表达式）将HTML文本分割成大量的标记（token），并去除其中无关的字符如空格。语法解析按照语法规则（如上下文无关文法）匹配Token序列生成语法树，通常有自上而下和自下而上两种匹配方式
+
+　　浏览器内核中对HTML页面真正的内部表示并不是语法树，而是W3C组织规范的文档对象模型(Document Object Model，DOM)。DOM也是树形结构，以Document对象为根。DOM节点基本和HTML语法树节点一一对应，因此在语法解析过程中，通常直接生成最终的DOM树
+
+2、解析CSS
+
+　　页面中所有的CSS由样式表CSSStyleSheet集合构成，而CSSStyleSheet是一系列CSSRule的集合，每一条CSSRule则由选择器CSSStyleSelector部分和声明CSSStyleDeclaration部分构成，而CSSStyleDeclaration是CSS属性和值的Key-Value集合
+
+　　CSS解析完毕后会进行CSSRule的匹配过程，即寻找满足每条CSS规则Selector部分的HTML元素，然后将其Declaration部分应用于该元素。实际的规则匹配过程会考虑到默认和继承的CSS属性、匹配的效率及规则的优先级等因素
+
+3、解析Javascript
+
+　　JavaScript一般由单独的脚本引擎解析执行，它的作用通常是动态地改变DOM树（比如为DOM节点添加事件响应处理函数），即根据时间（timer）或事件（event）映射一棵DOM树到另一棵DOM树。
+
+　　简单来说，经过了Parser模块的处理，内核把页面文本转换成了一棵节点带CSS Style、会响应自定义事件的Styled DOM树
+
+【layout】
+
+>Layout过程就是排版，它包含两大过程
+
+1、创建渲染树
+
+　　布局树（或者叫做渲染树、Render Tree）和DOM树大体能一一对应，两者在内核中同时存在但作用不同。DOM树是HTML文档的对象表示，同时也作为JavaScript操纵HTML的对象接口。Render树是DOM树的排版表示，用以计算可视DOM节点的布局信息（如宽、高、坐标）和后续阶段的绘制显示
+
+　　注意：并非所有DOM节点都可视，也就是并非所有DOM树节点都会对应生成一个Render树节点。例如head标签（HTMLHeadElement节点）不表示任何排版区域，因而没有对应的Render节点。同时，DOM树可视节点的CSS Style就是其对应Render树节点的Style
+
+![](https://pic.xiaohuochai.site/blog/chrome3.jpeg)
+
+2、计算布局
+
+　　布局就是安排和计算页面中每个元素大小位置等几何信息的过程。HTML采用流式布局模型，基本的原则是页面元素在顺序遍历过程中依次按从左至右、从上至下的排列方式确定各自的位置区域
+
+　　一个HTML元素对应一个以CSS盒子模型描述的方块区域，HTML元素分成两个基本类型，Inline和Block。Inline元素不会换行，按从左到右来布局。Block元素的出现意味着需要从上至下换到下一行来布局。除了这种基本的顺序按照元素的Inline和Block来进行流式布局之外，还有特殊指定的一些布局方式，如Absolute/Fixed/Relative三种定位布局以及Float浮动布局
+
+　　简单情况下，布局可以顺序遍历一次Render树完成，但也有需要迭代的情况。当祖先元素的大小位置依赖于后代元素或者互相依赖时，一次遍历就无法完成布局，如Table元素的宽高未明确指定而其下某一子元素Tr指定其高度为父Table高度的30%的情况
+
+　　经过了Layout阶段的处理，把带Style的DOM树变换成包含布局信息和绘制信息的Render树，接下来的显示工作就交由Paint模块进行操作了
+
+【Paint】
+
+
+>Paint模块负责将Render树映射成可视的图形，它会遍历Render树调用每个Render节点的绘制方法将其内容显示在一块画布或者位图上，并最终呈现在浏览器应用窗口中成为用户看到的实际页面。每个节点对应的大小位置等信息都已经由Layout阶段计算好了，节点的内容取决于对应的HTML元素，或是文本，或是图片，或是UI控件
+
+>通常情况下，布局和绘制是相当耗时的操作。如果DOM树每次略有改动都要重新布局和绘制一次，效率会相当低下。因此，一般浏览内核都会实现一种增量布局和增量绘制的方式。当一个DOM树节点（或者它的子节点）内容或者样式发生变化时，内核会确定其影响范围，在布局阶段会标记出受该节点布局影响的其他节点（比如可能是子节点），在绘制阶段则会标记出一个Dirty区域并通知系统重绘
+
+>按照HTML相关规范，页面元素的CSS属性也规定了其绘制顺序，如根据不同Layer必须按顺序绘制，否则覆盖叠加效果会出现错误，如元素的边框轮廓和内容背景的绘制次序也有规定
+
+
+**资源加载**
+
+>使用浏览器上网时，首先会在地址栏输入一个网址，浏览器会依据网址向服务器发送资源请求，服务器解析请求，并将相关数据资源传送回给浏览器，这些数据资源包括Page的描述文档、图片、JavaScript脚本、CSS等。此后，浏览器引擎会对数据进行解码、解析、排版、绘制等操作，最终呈现出完整的页面。Loader是浏览器的排头兵，负责资源加载的工作
+
+>Loader在浏览器中承上启下，一方面它作为网络模块的客户，通过网络模块来加载资源；另一方面它为Parser模块加载页面的内容，控制着浏览器后续的解析以及绘制过程
+
+![](https://pic.xiaohuochai.site/blog/chrome5.jpeg)
+
+　　Loader有两条资源加载路径：主资源加载路径和派生资源加载路径。这两类资源的加载过程颇有不同，比如对资源加载失败的处理，主资源下载失败会有报错提示，而派生资源如图片下载失败，往往只显示一个占位
+
+　　在地址栏输入新地址或者在已经打开的页面中点击链接，都会触发主资源的加载流程，随着主资源在HTTP协议的传输下分段到达，浏览器的Parser模块解析主资源的内容，生成派生资源对应的DOM结构，然后根据需求触发派生资源的加载流程。主资源的加载是立刻发起的，而派生资源则可能会为了优化网络，在队列中等待
+
+　　主资源和派生资源的加载还有一个区别，在Android 4.2版本中主资源是没有缓存的，而派生资源是有缓存机制的。这里的缓存指的是Memory Cache，用于保存原始数据（比如CSS、JS等），以及解码过的数据，通过Memory Cache可以节省网络请求和图片解码的时间
+
+　　浏览器在加载主资源后，主资源会被解码，然后进行解析，生成DOM（文档对象模型）树。在解析过程中，如果遇到<img的起始标签，会创建相应的image元素HTMLImageElement，接着依据img标签的内容设置HTMLImageElement的属性。在设置src属性时，会触发图片资源加载，发起加载资源请求
+
+
+**缓存**
+
+>缓存在浏览器中也得到了广泛的应用，对提高用户体验起到了重要作用。在浏览器中，主要存在三种类型的缓存：Page Cache、Memory Cache、Disk Cache。这三类Cache的容量都是可以配置的，比如限制Memory Cache最大不超过30MB，Page Cache缓存的页面数量不超过5个等
+
+	Page Cache：是将浏览的页面状态临时保存在缓存中，以加速页面返回等操作
+	Memory Cache：浏览器内部的缓存机制，对于相同url的资源直接从缓存中获取，不需重新下载
+	Disk Cache：资源加载缓存和服务器进行交互，服务器端可以通过HTTP头信息设置网页要不要缓存。
+
+
+【内存缓存】
+
+　　Memory Cache，顾名思义内存缓存，其主要作用为缓存页面使用各种派生资源。在使用浏览器浏览网页时，尤其是浏览一个大型网站的不同页面时，经常会遇到网页中包含相同资源的情况，应用Memory Cache可以显著提高浏览器的用户体验，减少无谓的内存、时间以及网络带宽开销
+
+【页面缓存】
+
+　　Page Cache，即页面缓存。用来缓存用户访问过的网页DOM树、Render树等数据。设计页面缓存的意图在于提供流畅的页面前进、后退浏览体验。几乎所有的现代浏览器都支持页面缓存功能
+
+　　如果浏览器没有页面缓存，用户点击链接访问新页面时，原页面的各种派生资源、JavaScript对象、DOM树节点等占据的内存统统被回收，此后当用户点击后退按钮以浏览原页面时，浏览器必须先要重新从网络下载相关资源，然后进行解码、解析、布局、渲染一系列操作，最后才能为用户呈现出页面，这无疑增加了用户的等待时间，影响了用户的使用体验
+
+　　所有的派生资源加载时都会与Memory Cache关联，如果Memory Cache中有资源的备份且条件合适，则可以直接从Memory Cache中加载。而Page Cache只会在用户点击前进或后退按钮时才会被查询，如果页面符合缓存条件并被缓存了，则直接从Page Cache中加载。即使某个需要被加载的页面在Page Cache中有备份，但若触发加载的原因是用户在地址栏输入url或点击链接，则页面仍然是通过网络加载。也就是说Page Cache并不是主资源的通用缓存
+
+【磁盘缓存】
+
+　　Disk Cache，即磁盘缓存。现代的浏览器基本都有磁盘缓存机制，为了提升用户的使用体验，浏览器将下载的资源保存到本地磁盘，当浏览器下次请求相同的资源时，可以省去网络下载资源的时间，直接从本地磁盘中取出资源即可
+
+　　磁盘缓存即我们常说的Web缓存，分为强缓存和协商缓存，它们的区别在于强缓存不发请求到服务器，协商缓存会发请求到服务器
+
+**网页解析**
+
+>可以将浏览器整体看作一个网页处理模块，这个模块的输入是网络上接收到的字节流形式的网页内容。输出是三棵树型逻辑结构：DOM树、Render树及RenderLayer树
+
+浏览器的解析过程就是将字节流形式的网页内容构建成DOM树、Render树及RenderLayer树的过程
+
+浏览器的解析对象是网页内容，网页内容包括以下三个部分：
+
+	　　1、HTML文档：超文本标记语言，制作Web页面的标准语言
+	
+	　　2、CSS样式表（Cascading Style Sheet）：级联样式表，用来控制网页样式，
+	　　并允许样式信息与网页内容相分离的一种标记性语言
+	
+	　　3、JavaScript脚本：JavaScript是一种无类型的解释型脚本语言。常用于为网页添加动态功能
+
+　　HTML文档决定了DOM树及Render树的结构。CSS样式表决定了Render树上节点的排版布局方式。JavaScript代码可以操作DOM树，改变DOM树的结构，也可以用来给页面添加更丰富的动态功能
+
+　　HTML文档被解析生成DOM树，由DOM节点创建Render树节点时，会触发CSS匹配过程，CSS匹配的结果是RenderStyle实例，这个实例由Render节点持有，保存了Render节点的排版布局信息。CSS的解析过程即是CSS语法在浏览器的内部表示过程，解析的结果是得到一系列的CSS规则。CSS的匹配过程主要依据CSS选择器的不同优先级进行，高优先级选择器优先适用。根据网页上定义的JavaScript脚本的不同属性，JavaScript脚本的下载和执行时机会有所不同。JavaScript脚本的执行是由渲染引擎转交给JS引擎执行的。下面分别看一下HTML、CSS、JavaScript的具体解析和执行
+
+【DOM树构建】
+
+>DOM（Document Object Model，文档对象模型），是中立于平台和语言的接口。它允许程序和脚本动态地访问和更新文档的内容结构和样式。DOM是页面上数据和结构的一个树形表示，使用DOM接口可以对DOM树结构进行操作。DOM规范只是定义了编程接口，没有对文档的表示方式做任何限制。以树状结构表示DOM文档是比较普遍的实现方式。这个树状结构就称为DOM树。DOM树是DOM文档中的节点按照层次组织构成的。以HTML文档为例，每一个标签都对应着DOM树上的一个节点。由于是树形结构表示，这些节点之间的关系也是通过父子或兄弟维系的
+
+　　渲染引擎解析HTML文档的过程就是将字节流形式的网页内容解析成DOM Tree、Render Tree、Render Layer Tree三棵树的过程。这个过程可以分为解码、分词、解析、建树四个步骤
+
+　　1、解码：将网络上接收到的经过编码的字节流，解码成Unicode字符
+
+　　2、分词：按照一定的切词规则，将Unicode字符流切成一个个的词语(Tokens)
+
+　　3、解析：根据词语的语义，创建相应的节点(Node)
+
+　　4、建树：将节点关联到一起，创建DOM树、Render树和RenderLayer树
+
+【Render树构建】
+
+　　Render树用于表示文档的可视信息，记录了文档中每个可视元素的布局及渲染方式。Render树与DOM树是同时创建的
+
+　　HTML页面通过CSS控制页面布局，所以RenderObject需要知道自身的CSS属性，CSSStyleSelector负责为元素提供RenderStyle。RenderObject包含自身的RenderStyle的引用。CSSStyleSelector是在CSS解析过程中生成的。Render节点创建后，就会被attach到Render树上
+
+　　当前Render节点的父节点负责将当前Render节点插入到合适的位置，当父Render节点设置好当前Redner节点的前后兄弟节点后，当前Render节点就attach到了Render树上
+
+　　RenderObject是Render树所有节点的基类，作用类似于DOM树的Node类。这个类存储了绘制页面可视元素所需要的样式及布局信息，RenderObject对象及其子类都知道如何绘制自己。事实上绘制Render树的过程就是RenderObject按照一定顺序绘制自身的过程。DOM树上的节点与Render树上的节点并不是一一对应的。只有DOM树的根节点及可视节点才会创建对应的RenderObject节点
+
+
+【Render Layer树构建】
+
+　　RenderLayer树以层为节点组织文档的可视信息，网页上的每一层对应一个RenderLayer对象。RenderLayer树可以看作Render树的稀疏表示，每个RenderLayer树的节点都对应着一棵Render树的子树，这棵子树上所有Render节点都在网页的同一层显示
+
+　　RenderLayer树是基于RenderObject树构建的，满足一定条件的RenderObject才会建立对应的RenderLayer节点。下面是RenderLayer节点的创建条件：
+
+　　1、网页的root节点
+
+　　2、有显式的CSS position属性（relative，absolute，fixed）
+
+　　3、元素设置了transform
+
+　　4、元素是透明的，即opacity不等于1
+
+　　5、节点有溢出（overflow）、alpha mask或者反射（reflection）效果。
+
+　　6、元素有CSS filter（滤镜）属性
+
+　　7、2D Canvas或者WebGL
+
+　　8、Video元素
+
+　　当满足这些条件之一时，RenderLayer实例被创建。RenderObject节点与RenderLayer节点是多对一的关系，即一个或多个RenderObject节点对应一个RenderLayer节点。这一点可以理解为网页的一层中可包含一个或多个可视节点。RenderLayer树的根节点是RenderView实例
+
+　　RenderLayer的一个重要用途是可以在绘制时实现合成加速，即每一个RenderLayer对应系统的一块后端存储，这样在网页内容发生更新时，可以只更新有变化的RenderLayer，从而提高渲染效率
+
+
+【CSS解析】
+
+
+
+
+
+
+
+
+
+
 
 
 
